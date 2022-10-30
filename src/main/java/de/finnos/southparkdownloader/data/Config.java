@@ -223,7 +223,7 @@ public class Config {
     private String ffprobeFilePath = "";
     private String downloadLang = DownloadLanguage.ENG.code;
     private String guiLang = GuiLanguage.ENG.code;
-    private int maxFfmpegProcesses = 20;
+    private int maxFfmpegProcesses = 10;
 
     public String getFfmpegFilePath() {
         return ffmpegFilePath;
