@@ -144,7 +144,7 @@
                                 <minVersion>17</minVersion>
                                 <!-- Der Pfad wird erst zu Laufzeit benötigt -->
                                 <!-- Über Jenkins wird das JRE heruntergeladen und in den "bin" Ordner verschoben -->
-                                <path>bin/jdk-17.0.5+8-jre</path>
+                                <path>bin/jre-17.0.5</path>
                                 <jdkPreference>preferJre</jdkPreference>
                             </jre>
                             <versionInfo>
