@@ -127,6 +127,7 @@ public class SeasonsTree extends JTree {
     private void fillTree () {
         seasons = DownloadDatabase.get().getSeasons();
         treeRoot = new DefaultMutableTreeNode(I18N.i18n("seasons"));
+        setModel(new DefaultTreeModel(treeRoot));
         for (Season season : seasons) {
             // Weil die Pfade abhängig von der Sprache anders sind, hier die Pfade nochmal laden
             season.setPath();
@@ -140,7 +141,6 @@ public class SeasonsTree extends JTree {
 
             treeRoot.add(nodeSeason);
         }
-        setModel(new DefaultTreeModel(treeRoot));
         expandRow(0);
     }
 }

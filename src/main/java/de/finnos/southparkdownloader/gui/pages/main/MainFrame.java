@@ -9,6 +9,7 @@ import de.finnos.southparkdownloader.gui.pages.file.DownloadDatabaseUpdater;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.Arrays;
 
@@ -36,14 +37,12 @@ public class MainFrame extends JFrame {
         panel.add(panelContent, BorderLayout.CENTER);
 
         setSize(new Dimension(600, 600));
-        setMaximumSize(new Dimension(600, 600));
         setResizable(false);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setContentPane(panel);
         setTitle("Southpark Downloader");
 
         Helper.defaultDialog(this);
-        pack();
     }
 
     private void initContent() {
@@ -127,11 +126,11 @@ public class MainFrame extends JFrame {
             panelSeasonsTree.add(labelEmptyDatabase, "wrap");
             panelSeasonsTree.add(buttonCreateDatabase, "growx");
         } else {
-            panelSeasonsTree.add(new JScrollPane(tree), "w 100%, h 100%");
+            final var scroller = new JScrollPane(tree);
+            scroller.setSize(panelSeasonsTree.getSize());
+            panelSeasonsTree.add(scroller, "w 100%, h 100%");
             reloadTree();
         }
-
-        repaint();
     }
 
     private void reloadTree()  {

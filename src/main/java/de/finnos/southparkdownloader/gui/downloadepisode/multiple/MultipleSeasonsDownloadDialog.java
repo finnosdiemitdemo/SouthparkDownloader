@@ -12,6 +12,7 @@ import de.finnos.southparkdownloader.processes.ThreadProcess;
 import de.finnos.southparkdownloader.services.BaseServiceEventAdapter;
 import de.finnos.southparkdownloader.services.combine.CombineService;
 import de.finnos.southparkdownloader.services.download.DownloadServiceEventAdapter;
+import de.finnos.southparkdownloader.services.metadata.MetaDataService;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 
 public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
     private final CombineService combineService;
+    private final MetaDataService metaDataService;
 
     private JPanel buttonsPanel = new JPanel(new MigLayout("insets 0"));
     private JComboBox<Resolution> comboBoxResolution;
@@ -37,6 +39,7 @@ public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
         super(event);
         this.seasons = seasons;
         this.combineService = new CombineService(this);
+        this.metaDataService = new MetaDataService(this);
 
         init();
     }
@@ -84,11 +87,8 @@ public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
 
                     for (final Episode episode : season.getEpisodes()) {
                         cancelProcessIfInterruptionIsInProgress();
-                        if (!episode.downloaded()) {
-                            getProgressEvent().updateProgress(String.format("Load media for episode %d...", episode.getNumber()), episode.getNumber());
-
-                            episode.loadMedia();
-                        }
+                        getProgressEvent().updateProgress(String.format("Load media for episode %d...", episode.getNumber()), episode.getNumber());
+                        episode.loadMedia();
                     }
                 }
             }
@@ -187,8 +187,19 @@ public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
             @Override
             public void done(final boolean wasInterrupted, final Throwable throwable) {
                 resetToDownload();
+                if (!wasInterrupted) {
+                    setMetaInfos();
+                }
             }
         });
+    }
+
+    private void setMetaInfos() {
+        for (final Season season : seasons) {
+            for (final Episode episode : season.getEpisodes()) {
+                metaDataService.start(List.of(episode), new BaseServiceEventAdapter() {});
+            }
+        }
     }
 
     private void resetToDownload() {

@@ -25,7 +25,7 @@ public abstract class BaseService<E extends BaseServiceEvent, PROGRESS_ITEM> {
         this.serviceEvent = event;
 
         addProcessesChangeListener((processChangedEvent) -> {
-            if (processChangedEvent.type == ProcessChangedEvent.Type.ADD
+            if (processChangedEvent.type == ProcessChangedEvent.Type.DELETE
                 || processChangedEvent.type == ProcessChangedEvent.Type.KILL_ALL) {
                 for (int i = processes.size(); i < Config.get().getMaxFfmpegProcesses(); i++) {
                     handleNext();

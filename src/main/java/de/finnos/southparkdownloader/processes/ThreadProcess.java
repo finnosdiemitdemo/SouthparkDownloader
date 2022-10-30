@@ -1,6 +1,8 @@
 package de.finnos.southparkdownloader.processes;
 
 import de.finnos.southparkdownloader.gui.components.progressdialog.events.ProgressEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -8,6 +10,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class ThreadProcess extends Thread implements CancelableProcess {
+    private static final Logger LOG = LoggerFactory.getLogger(ThreadProcess.class);
+
     private ProgressEvent progressEvent;
     private final List<Runnable> finishedListeners = new ArrayList<>();
     private final List<Consumer<Throwable>> interruptedListeners = new ArrayList<>();
@@ -28,16 +32,19 @@ public abstract class ThreadProcess extends Thread implements CancelableProcess 
         try {
             execute();
             finishedListeners.forEach(Runnable::run);
-        } catch (InterruptThreadProcessException ignored) {
+        } catch (InterruptThreadProcessException e) {
+            interruptedListeners.forEach(throwableConsumer -> throwableConsumer.accept(e));
+        } catch (Exception e) {
+            LOG.error("UncaughtException", e);
+            getProgressEvent().updateProgress("Exception occurred: " + e.getMessage());
 
+            interruptedListeners.forEach(throwableConsumer -> throwableConsumer.accept(e));
         }
     }
 
     @Override
     public void interrupt() {
-        // Request interruption
         super.interrupt();
-        interruptedListeners.forEach(throwableConsumer -> throwableConsumer.accept(null));
     }
 
     @Override
@@ -76,6 +83,6 @@ public abstract class ThreadProcess extends Thread implements CancelableProcess 
         }
     }
 
-    private static class InterruptThreadProcessException extends RuntimeException {
+    public static class InterruptThreadProcessException extends RuntimeException {
     }
 }

@@ -5,6 +5,7 @@ import de.finnos.southparkdownloader.I18N;
 import de.finnos.southparkdownloader.gui.DialogEvent;
 import de.finnos.southparkdownloader.gui.components.progressdialog.events.AbstractProgressDialogEvent;
 import de.finnos.southparkdownloader.processes.CancelableProcess;
+import de.finnos.southparkdownloader.processes.ThreadProcess;
 import jiconfont.icons.font_awesome.FontAwesome;
 import jiconfont.swing.IconFontSwing;
 import net.miginfocom.swing.MigLayout;
@@ -91,7 +92,13 @@ public class ProgressDialog extends JFrame implements WindowListener {
 
         if (removeTabOnFinished) {
             process.addFinishedListener(() -> removeTab(tab));
-            process.addInterruptedListener((e) -> removeTab(tab));
+            process.addInterruptedListener((e) -> {
+                // Der Tab soll nur zugemacht werden, wenn dieser aktiv durch den Benutzer geschlossen wurde.
+                // Bei allen anderen Exceptions wird diese dann im Tab angezeigt.
+                if (e instanceof ThreadProcess.InterruptThreadProcessException) {
+                    removeTab(tab);
+                }
+            });
         }
 
         if (isTabCloseable) {

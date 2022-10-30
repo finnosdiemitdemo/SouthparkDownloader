@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Map;
@@ -30,28 +31,29 @@ public class FfmpegHelper {
             playlistFileContent += String.format("file '%s'\n", new File(path).getAbsolutePath());
         }
 
-        final String playlistFilePath = "tmp.m3u8";
-        final File playlistFile = new File(playlistFilePath);
-
-        boolean _continue = true;
-        if (playlistFile.exists() && !playlistFile.delete()) {
-            _continue = false;
+        final Path playlistFilePath;
+        try {
+            playlistFilePath = Files.createTempFile("southpark_downloader_playlist", ".m3u8");
+        } catch (IOException e) {
+            LOG.error("Unable to create playlist file", e);
+            return null;
         }
 
-        if (_continue) {
-            try {
-                if (playlistFile.createNewFile()) {
-                    Files.writeString(Paths.get(playlistFilePath), playlistFileContent);
-                    final var ffmpegProcess = FfmpegExecutionHelper.executeAsyncFfmpegCommand(
-                        String.format("-y -f concat -safe 0 -i \"%s\" -c copy \"%s\"", playlistFilePath, destFilePath));
-                    ffmpegProcess.addFinishedListener(playlistFile::delete);
-                    return ffmpegProcess;
+        try {
+            Files.writeString(playlistFilePath, playlistFileContent);
+            final var ffmpegProcess = FfmpegExecutionHelper.executeAsyncFfmpegCommand(
+                String.format("-y -f concat -safe 0 -i \"%s\" -c copy \"%s\"", playlistFilePath, destFilePath));
+            ffmpegProcess.addFinishedListener(() -> {
+                try {
+                    Files.delete(playlistFilePath);
+                } catch (IOException e) {
+                    LOG.error("Unable to delete playlist file", e);
                 }
-            } catch (IOException e) {
-                Helper.showErrorMessage(null, e.getMessage());
-            }
+            });
+            return ffmpegProcess;
+        } catch (IOException e) {
+            Helper.showErrorMessage(null, e.getMessage());
         }
-
         return null;
     }
 
