@@ -9,3 +9,9 @@ sites (depends on your current geolocation) with FFmpeg:
 - [southparkstudios.com](https://southparkstudios.com)
 - [www.southpark.de](https://www.southpark.de)
 - [southparkstudios.co.uk](https://southparkstudios.co.uk)
+
+## Requirements
+- Java 17
+- FFmpeg
+
+Every release has a zip with the right jre and FFmpeg binaries.
