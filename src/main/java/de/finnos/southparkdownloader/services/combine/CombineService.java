@@ -8,6 +8,7 @@ import de.finnos.southparkdownloader.gui.components.progressdialog.events.Simple
 import de.finnos.southparkdownloader.processes.FfmpegProcess;
 import de.finnos.southparkdownloader.services.BaseService;
 import de.finnos.southparkdownloader.services.BaseServiceEvent;
+import de.finnos.southparkdownloader.services.ProgressItem;
 import de.finnos.southparkdownloader.services.download.SouthparkDownloadHelper;
 
 import java.nio.file.Path;
@@ -21,18 +22,13 @@ public class CombineService extends BaseService<BaseServiceEvent, CombineService
 
     @Override
     public FfmpegProcess handleItem(final CombineItem combineItem) {
-        return combine(combineItem.paths,combineItem.outputDir, combineItem.filename, getServiceEvent());
-    }
-
-    private FfmpegProcess combine (final ArrayList<String> paths, final String outputDir, final String filename, final BaseServiceEvent event) {
-        setServiceEvent(event);
+        setServiceEvent(getServiceEvent());
 
         final var progressItemPanel = new ProgressItemPanel();
         final var progressDialogEvent = new SimpleProgressDialogEvent(progressItemPanel);
-        FfmpegProcess process = combineParts(paths, outputDir, filename, progressDialogEvent);
+        final FfmpegProcess process = combineParts(combineItem.getPaths(), combineItem.getOutputDir(), combineItem.getFilename(), progressDialogEvent);
         if (process != null) {
-            progressDialog.addProgressItem(process, I18N.i18n("episode.combine_parts"), progressItemPanel, progressDialogEvent);
-            addProcess(process);
+            progressDialog.addProgressItem(process, combineItem, progressItemPanel, progressDialogEvent);
         }
         return process;
     }
@@ -50,5 +46,32 @@ public class CombineService extends BaseService<BaseServiceEvent, CombineService
         return null;
     }
 
-    public record CombineItem(ArrayList<String> paths, String outputDir, String filename) {}
+    public static class CombineItem implements ProgressItem {
+        private ArrayList<String> paths;
+        private String outputDir;
+        private String filename;
+
+        public CombineItem(final ArrayList<String> paths, final String outputDir, final String filename) {
+            this.paths = paths;
+            this.outputDir = outputDir;
+            this.filename = filename;
+        }
+
+        public ArrayList<String> getPaths() {
+            return paths;
+        }
+
+        public String getOutputDir() {
+            return outputDir;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+        @Override
+        public String getName() {
+            return I18N.i18n("episode.combine_parts");
+        }
+    }
 }

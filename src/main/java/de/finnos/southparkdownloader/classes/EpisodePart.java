@@ -4,11 +4,12 @@ import de.finnos.southparkdownloader.ffmpeg.ffprobe.FfprobeHelper;
 import de.finnos.southparkdownloader.services.download.SouthparkDownloadHelper;
 
 import java.io.File;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class EpisodePart {
+public class EpisodePart implements Serializable {
     private final Episode episode;
     private final int index;
     private String outputPath;
@@ -65,6 +66,9 @@ public class EpisodePart {
     }
 
     public boolean downloaded () {
+        if (outputPath == null) {
+            return false;
+        }
         return new File(outputPath).exists() && !FfprobeHelper.isVideoCorrupt(outputPath);
     }
 

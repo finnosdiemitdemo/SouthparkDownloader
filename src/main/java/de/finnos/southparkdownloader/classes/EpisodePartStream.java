@@ -2,9 +2,10 @@ package de.finnos.southparkdownloader.classes;
 
 import de.finnos.southparkdownloader.RegexHelper;
 
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class EpisodePartStream {
+public class EpisodePartStream implements Serializable {
     private final EpisodePart episodePart;
 
     private final Resolution resolution;

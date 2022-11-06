@@ -6,13 +6,13 @@ import de.finnos.southparkdownloader.ImageLoader;
 import de.finnos.southparkdownloader.classes.Episode;
 import de.finnos.southparkdownloader.classes.EpisodePart;
 import de.finnos.southparkdownloader.gui.DialogEvent;
-import de.finnos.southparkdownloader.gui.components.progressdialog.ServiceProgressDialog;
+import de.finnos.southparkdownloader.gui.components.progressdialog.ProgressDialog;
 import de.finnos.southparkdownloader.services.BaseServiceEventAdapter;
 import de.finnos.southparkdownloader.services.combine.CombineService;
+import de.finnos.southparkdownloader.services.download.DownloadService;
 import de.finnos.southparkdownloader.services.download.DownloadServiceEventAdapter;
 import de.finnos.southparkdownloader.services.metadata.MetaDataService;
 import net.miginfocom.swing.MigLayout;
-
 import javax.swing.*;
 import java.awt.*;
 import java.time.Duration;
@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class DownloadEpisodeDialog extends ServiceProgressDialog {
+public class DownloadEpisodeDialog extends ProgressDialog {
     enum DownloadAction {
         DOWNLOAD_ALL,
         DOWNLOAD_PART,
@@ -33,6 +33,7 @@ public class DownloadEpisodeDialog extends ServiceProgressDialog {
     private final Episode episode;
 
     private final Map<DownloadItem, EpisodePartPanel> mapAllDownloadItems;
+    private final DownloadService downloadService;
     private final CombineService combineService;
     private final MetaDataService metaDataService;
 
@@ -50,9 +51,10 @@ public class DownloadEpisodeDialog extends ServiceProgressDialog {
         super(event);
 
         this.episode = episode;
-        this.mapAllDownloadItems = new HashMap<>();
-        this.combineService = new CombineService(this);
-        this.metaDataService = new MetaDataService(this);
+        mapAllDownloadItems = new HashMap<>();
+        downloadService = new DownloadService(this);
+        combineService = new CombineService(this);
+        metaDataService = new MetaDataService(this);
 
         init();
     }
@@ -172,7 +174,7 @@ public class DownloadEpisodeDialog extends ServiceProgressDialog {
             }
         }
 
-        getDownloadService().start(downloadItemQueue, new DownloadServiceEventAdapter() {
+        downloadService.start(downloadItemQueue, new DownloadServiceEventAdapter() {
             @Override
             public void done(final boolean wasInterrupted, final Throwable throwable) {
                 downloadAction = DownloadAction.NONE;
@@ -194,7 +196,7 @@ public class DownloadEpisodeDialog extends ServiceProgressDialog {
 
         final DownloadItem item = findDownloadItem(part, panel);
         if (item != null) {
-            getDownloadService().start(List.of(item), new DownloadServiceEventAdapter() {
+            downloadService.start(List.of(item), new DownloadServiceEventAdapter() {
                 @Override
                 public void doneItem(final DownloadItem item) {
                     update();
@@ -255,7 +257,12 @@ public class DownloadEpisodeDialog extends ServiceProgressDialog {
     }
 
     private void metMetaInfos() {
-        metaDataService.start(List.of(episode), new BaseServiceEventAdapter() {});
+        metaDataService.start(List.of(new MetaDataService.MetaProgressItem(episode)), new BaseServiceEventAdapter() {
+            @Override
+            public void done(final boolean wasInterrupted, final Throwable throwable) {
+                update();
+            }
+        });
     }
 
     public void update() {
@@ -276,8 +283,8 @@ public class DownloadEpisodeDialog extends ServiceProgressDialog {
             if (downloadAction == DownloadAction.DOWNLOAD_PART) {
                 for (final Map.Entry<DownloadItem, EpisodePartPanel> entry : mapAllDownloadItems.entrySet()) {
                     boolean isDownloading = false;
-                    if (getDownloadService().getDownloadingItems().contains(entry.getKey())) {
-                        isDownloading = getDownloadService().getDownloadingItems().stream()
+                    if (downloadService.getDownloadingItems().containsKey(entry.getKey())) {
+                        isDownloading = downloadService.getDownloadingItems().keySet().stream()
                             .anyMatch(downloadItem -> downloadItem.equals(entry.getKey()));
                     }
 

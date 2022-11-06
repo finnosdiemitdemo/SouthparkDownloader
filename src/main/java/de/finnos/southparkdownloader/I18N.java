@@ -12,7 +12,7 @@ public class I18N {
     private static final Map<Locale, ResourceBundle> MAP_I18N_BUNDLES = new HashMap<>();
 
     public static String i18n(final String key) {
-        return i18n(Config.GuiLanguage.valueOfCode(Config.get().getGuiLang()).getLocale(), key);
+        return i18n(Locale.getDefault(), key);
     }
 
     public static String i18n(final Locale locale, final String key) {

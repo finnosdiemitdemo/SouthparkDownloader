@@ -54,7 +54,9 @@ public abstract class ThreadProcess extends Thread implements CancelableProcess 
 
     @Override
     public void cancel() {
-        interrupt();
+        if (isAlive()) {
+            interrupt();
+        }
     }
 
     @Override
@@ -67,7 +69,7 @@ public abstract class ThreadProcess extends Thread implements CancelableProcess 
         interruptedListeners.add(runnable);
     }
 
-    public abstract void execute();
+    public abstract void execute() throws Exception;
 
     public void setProgressEvent(ProgressEvent progressEvent) {
         this.progressEvent = progressEvent;

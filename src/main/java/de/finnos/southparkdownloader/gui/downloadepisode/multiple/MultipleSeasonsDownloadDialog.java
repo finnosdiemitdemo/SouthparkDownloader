@@ -4,13 +4,14 @@ import de.finnos.southparkdownloader.I18N;
 import de.finnos.southparkdownloader.ImageLoader;
 import de.finnos.southparkdownloader.classes.*;
 import de.finnos.southparkdownloader.gui.DialogEvent;
+import de.finnos.southparkdownloader.gui.components.progressdialog.ProgressDialog;
 import de.finnos.southparkdownloader.gui.components.progressdialog.ProgressItemPanel;
-import de.finnos.southparkdownloader.gui.components.progressdialog.ServiceProgressDialog;
 import de.finnos.southparkdownloader.gui.components.progressdialog.events.ProgressDialogEvent;
 import de.finnos.southparkdownloader.gui.downloadepisode.single.DownloadItem;
 import de.finnos.southparkdownloader.processes.ThreadProcess;
 import de.finnos.southparkdownloader.services.BaseServiceEventAdapter;
 import de.finnos.southparkdownloader.services.combine.CombineService;
+import de.finnos.southparkdownloader.services.download.DownloadService;
 import de.finnos.southparkdownloader.services.download.DownloadServiceEventAdapter;
 import de.finnos.southparkdownloader.services.metadata.MetaDataService;
 import net.miginfocom.swing.MigLayout;
@@ -22,7 +23,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
+public class MultipleSeasonsDownloadDialog extends ProgressDialog {
+    private final DownloadService downloadService;
     private final CombineService combineService;
     private final MetaDataService metaDataService;
 
@@ -31,15 +33,15 @@ public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
     private JButton buttonPrepareDownload;
     private JButton buttonStartDownload;
     private JButton buttonCombineParts;
-    private JButton buttonCancelDownload;
 
     private final List<Season> seasons;
 
     public MultipleSeasonsDownloadDialog(DialogEvent event, final List<Season> seasons) {
         super(event);
         this.seasons = seasons;
-        this.combineService = new CombineService(this);
-        this.metaDataService = new MetaDataService(this);
+        downloadService = new DownloadService(this);
+        combineService = new CombineService(this);
+        metaDataService = new MetaDataService(this);
 
         init();
     }
@@ -61,11 +63,6 @@ public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
 
         buttonCombineParts = new JButton(I18N.i18n("episode.combine_parts"), ImageLoader.IMAGE_CONNECT);
         buttonCombineParts.addActionListener(e -> combine());
-
-        buttonCancelDownload = new JButton(I18N.i18n("cancel"), ImageLoader.IMAGE_CANCEL);
-        buttonCancelDownload.addActionListener(e -> {
-            getDownloadService().stop();
-        });
 
         getContentPanel().add(buttonsPanel);
         buttonsPanel.add(buttonPrepareDownload);
@@ -116,7 +113,6 @@ public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
             pack();
         });
         thread.addInterruptedListener(throwable -> buttonPrepareDownload.setEnabled(true));
-        thread.start();
     }
 
     private void download() {
@@ -153,7 +149,7 @@ public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
             }
         }
 
-        getDownloadService().start(downloadItemQueue, new DownloadServiceEventAdapter() {
+        downloadService.start(downloadItemQueue, new DownloadServiceEventAdapter() {
             @Override
             public void done(final boolean wasInterrupted, final Throwable throwable) {
                 if (wasInterrupted) {
@@ -197,7 +193,7 @@ public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
     private void setMetaInfos() {
         for (final Season season : seasons) {
             for (final Episode episode : season.getEpisodes()) {
-                metaDataService.start(List.of(episode), new BaseServiceEventAdapter() {});
+                metaDataService.start(List.of(new MetaDataService.MetaProgressItem(episode)), new BaseServiceEventAdapter() {});
             }
         }
     }
@@ -206,10 +202,5 @@ public class MultipleSeasonsDownloadDialog extends ServiceProgressDialog {
         comboBoxResolution.setEnabled(true);
         buttonStartDownload.setEnabled(true);
         buttonCombineParts.setEnabled(true);
-    }
-
-    @Override
-    public void update() {
-
     }
 }

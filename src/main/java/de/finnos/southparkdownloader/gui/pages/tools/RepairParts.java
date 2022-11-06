@@ -10,8 +10,8 @@ import de.finnos.southparkdownloader.data.DownloadDatabase;
 import de.finnos.southparkdownloader.ffmpeg.ffprobe.FfprobeHelper;
 import de.finnos.southparkdownloader.ffmpeg.ffprobe.VideoInfo;
 import de.finnos.southparkdownloader.gui.DialogEvent;
+import de.finnos.southparkdownloader.gui.components.progressdialog.ProgressDialog;
 import de.finnos.southparkdownloader.gui.components.progressdialog.ProgressItemPanel;
-import de.finnos.southparkdownloader.gui.components.progressdialog.ServiceProgressDialog;
 import de.finnos.southparkdownloader.gui.components.progressdialog.events.ProgressDialogEvent;
 import de.finnos.southparkdownloader.gui.downloadepisode.single.DownloadItem;
 import de.finnos.southparkdownloader.processes.ThreadProcess;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class RepairParts extends ServiceProgressDialog {
+public class RepairParts extends ProgressDialog {
 
     private final DownloadService downloadService;
 
@@ -42,11 +42,6 @@ public class RepairParts extends ServiceProgressDialog {
         mapBrokenParts = new HashMap<>();
 
         init();
-    }
-
-    @Override
-    public void update() {
-
     }
 
     private void init() {
@@ -119,7 +114,6 @@ public class RepairParts extends ServiceProgressDialog {
         removeFinishedTabs();
         final var progressItemPanel = new ProgressItemPanel();
         addProgressItem(thread, I18N.i18n("repair.repair_parts"), progressItemPanel, new ProgressDialogEvent(progressItemPanel), false, true);
-        thread.start();
     }
 
     private String formatDurationSeconds(final int seconds) {
@@ -179,6 +173,5 @@ public class RepairParts extends ServiceProgressDialog {
         removeFinishedTabs();
         final var progressItemPanel = new ProgressItemPanel();
         addProgressItem(thread, I18N.i18n("repair.redownload_broken_parts"), progressItemPanel, new ProgressDialogEvent(progressItemPanel), false, true);
-        thread.start();
     }
 }

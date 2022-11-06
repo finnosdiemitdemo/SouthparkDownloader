@@ -168,6 +168,8 @@ public class Config {
             CONFIG.downloadLang = mapDomainToAvailableLanguages.keySet().stream().findFirst().map(lang -> lang.code).orElse("");
             save();
         }
+
+        updateLocale();
     }
 
     public static DownloadLanguageConfig getLanguageConfig() {
@@ -218,6 +220,9 @@ public class Config {
         }
     }
 
+    private static void updateLocale () {
+        Locale.setDefault(Config.GuiLanguage.valueOfCode(Config.get().getGuiLang()).getLocale());
+    }
 
     private String ffmpegFilePath = "";
     private String ffprobeFilePath = "";
@@ -255,6 +260,8 @@ public class Config {
 
     public void setGuiLang(final String guiLang) {
         this.guiLang = guiLang;
+
+        updateLocale();
     }
 
     public int getMaxFfmpegProcesses() {

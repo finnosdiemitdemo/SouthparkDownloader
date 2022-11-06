@@ -1,24 +1,21 @@
 package de.finnos.southparkdownloader.services;
 
+import de.finnos.southparkdownloader.Registration;
 import de.finnos.southparkdownloader.data.Config;
 import de.finnos.southparkdownloader.gui.components.progressdialog.ProgressDialog;
 import de.finnos.southparkdownloader.processes.CancelableProcess;
-import de.finnos.southparkdownloader.processes.FfmpegProcess;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
-public abstract class BaseService<E extends BaseServiceEvent, PROGRESS_ITEM> {
+public abstract class BaseService<E extends BaseServiceEvent, PROGRESS_ITEM extends ProgressItem> {
     protected final ProgressDialog progressDialog;
     protected E serviceEvent;
 
-    protected ArrayList<Process> processes = new ArrayList<>();
     protected List<Consumer<ProcessChangedEvent>> onProcessesChangedListeners = new ArrayList<>();
 
     protected List<PROGRESS_ITEM> downloadItemQueue = new ArrayList<>();
-    protected List<PROGRESS_ITEM> downloadingItems = new ArrayList<>();
+    protected Map<PROGRESS_ITEM, CancelableProcess> downloadingItems = new HashMap<>();
 
     public BaseService(final ProgressDialog progressDialog, E event) {
         this.progressDialog = progressDialog;
@@ -27,11 +24,13 @@ public abstract class BaseService<E extends BaseServiceEvent, PROGRESS_ITEM> {
         addProcessesChangeListener((processChangedEvent) -> {
             if (processChangedEvent.type == ProcessChangedEvent.Type.DELETE
                 || processChangedEvent.type == ProcessChangedEvent.Type.KILL_ALL) {
-                for (int i = processes.size(); i < Config.get().getMaxFfmpegProcesses(); i++) {
+                for (int i = downloadingItems.size(); i < Config.get().getMaxFfmpegProcesses(); i++) {
                     handleNext();
                 }
             }
         });
+
+        progressDialog.registerService(this);
     }
 
     public void start(final List<PROGRESS_ITEM> downloadItemQueue, final E event) {
@@ -44,21 +43,28 @@ public abstract class BaseService<E extends BaseServiceEvent, PROGRESS_ITEM> {
             this.downloadItemQueue.addAll(downloadItemQueue);
         }
 
-        for (int i = processes.size(); i < Config.get().getMaxFfmpegProcesses(); i++) {
+        for (int i = downloadingItems.size(); i < Config.get().getMaxFfmpegProcesses(); i++) {
             handleNext();
         }
     }
 
+    public void stop() {
+        this.downloadItemQueue.clear();
+        downloadingItems.forEach((progress_item, cancelableProcess) -> cancelableProcess.cancel());
+        downloadingItems.clear();
+    }
+
     private void handleNext() {
-        if (processes.size() >= Config.get().getMaxFfmpegProcesses()) {
+        if (downloadingItems.size() >= Config.get().getMaxFfmpegProcesses()) {
             return;
         }
         final Optional<PROGRESS_ITEM> optItem = downloadItemQueue.stream().findFirst();
         if (optItem.isPresent()) {
             final var item = optItem.get();
             downloadItemQueue.remove(item);
-            downloadingItems.add(item);
             final var cancelableProcess = handleItem(item);
+            downloadingItems.put(item, cancelableProcess);
+            onProcessesChangedListeners.forEach(booleanConsumer -> booleanConsumer.accept(new ProcessChangedEvent(ProcessChangedEvent.Type.ADD)));
             if (cancelableProcess != null) {
                 cancelableProcess.addFinishedListener(() -> onProcessDone(item, false, null));
                 cancelableProcess.addInterruptedListener((e) -> onProcessDone(item, true, e));
@@ -71,6 +77,7 @@ public abstract class BaseService<E extends BaseServiceEvent, PROGRESS_ITEM> {
         if (downloadItemQueue.isEmpty() && downloadingItems.isEmpty()) {
             getServiceEvent().done(wasInterrupted, throwable);
         }
+        onProcessesChangedListeners.forEach(booleanConsumer -> booleanConsumer.accept(new ProcessChangedEvent(ProcessChangedEvent.Type.DELETE)));
     }
 
     public abstract CancelableProcess handleItem(final PROGRESS_ITEM item);
@@ -87,30 +94,17 @@ public abstract class BaseService<E extends BaseServiceEvent, PROGRESS_ITEM> {
         this.serviceEvent = serviceEvent;
     }
 
-    public void addProcess(final FfmpegProcess ffmpegProcess) {
-        final var process = ffmpegProcess.getProcess();
-        processes.add(process);
-
-        process.onExit().whenCompleteAsync((process1, throwable) -> removeProcess(ffmpegProcess));
-        onProcessesChangedListeners.forEach(booleanConsumer -> booleanConsumer.accept(new ProcessChangedEvent(ProcessChangedEvent.Type.ADD)));
-    }
-
-    private void removeProcess(final FfmpegProcess ffmpegProcess) {
-        final var process = ffmpegProcess.getProcess();
-        processes.remove(process);
-        onProcessesChangedListeners.forEach(booleanConsumer -> booleanConsumer.accept(new ProcessChangedEvent(ProcessChangedEvent.Type.DELETE)));
-    }
-
-    public void addProcessesChangeListener(final Consumer<ProcessChangedEvent> listener) {
+    public Registration addProcessesChangeListener(final Consumer<ProcessChangedEvent> listener) {
         onProcessesChangedListeners.add(listener);
+        return () -> onProcessesChangedListeners.remove(listener);
     }
 
-    public List<PROGRESS_ITEM> getDownloadingItems() {
+    public Map<PROGRESS_ITEM, CancelableProcess> getDownloadingItems() {
         return downloadingItems;
     }
 
-    public void stop() {
-
+    public List<PROGRESS_ITEM> getDownloadItemQueue() {
+        return Collections.unmodifiableList(downloadItemQueue);
     }
 
     public static class ProcessChangedEvent {

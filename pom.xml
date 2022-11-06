@@ -70,11 +70,31 @@
             <artifactId>jiconfont-font_awesome</artifactId>
             <version>4.7.0.1</version>
         </dependency>
+
+        <!-- For SerializationUtils -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+
+        <!-- For FilenameUtils -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version>
+        </dependency>
     </dependencies>
 
     <build>
         <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
         <testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
+        <resources>
+            <resource>
+                <filtering>true</filtering>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -182,6 +202,8 @@
         <java.compiler.target>17</java.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <timestamp>${maven.build.timestamp}</timestamp>
+        <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
         <final-name>SouthparkDownloader</final-name>
         <main-class>de.finnos.southparkdownloader.SouthparkDownloader</main-class>
     </properties>

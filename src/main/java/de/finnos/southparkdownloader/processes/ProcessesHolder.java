@@ -2,17 +2,17 @@ package de.finnos.southparkdownloader.processes;
 
 import de.finnos.southparkdownloader.Helper;
 import de.finnos.southparkdownloader.I18N;
+import de.finnos.southparkdownloader.services.BaseService;
+import de.finnos.southparkdownloader.services.HasServices;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class ProcessesHolder {
     private static final Map<JFrame, List<CancelableProcess>> PROCESSES = new HashMap<>();
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public static void init() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -46,6 +46,14 @@ public class ProcessesHolder {
                 @Override
                 public void windowClosed(final WindowEvent e) {
                     super.windowClosed(e);
+
+                    // Alle Items, die noch in der Warteschlange sind, werden erstmal entfernt,
+                    // damit diese beim Beenden der laufenden Prozesse nicht gestartet werden.
+                    // Danach werden alle Prozesse beendet
+                    if (jFrame instanceof final HasServices hasServices) {
+                        hasServices.getServices().forEach(BaseService::stop);
+                    }
+
                     // to avoid ConcurrentModificationException with addInterruptedListener
                     final var cancelableProcesses = PROCESSES.get(jFrame);
                     PROCESSES.remove(jFrame);
@@ -66,7 +74,7 @@ public class ProcessesHolder {
         }
     }
 
-    public static void remove(final JFrame jFrame, final CancelableProcess process) {
+    private static void remove(final JFrame jFrame, final CancelableProcess process) {
         if (PROCESSES.containsKey(jFrame)) {
             PROCESSES.get(jFrame).remove(process);
         }

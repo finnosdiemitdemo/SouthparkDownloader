@@ -43,11 +43,7 @@ public class DownloadService extends BaseService<DownloadServiceEvent, DownloadI
         };
         final FfmpegProcess process = download(item, event);
         if (process != null && getServiceEvent() != null) {
-            final var identifier = "S%s E%s P%s".formatted(item.getEpisodePart().getEpisode().getSeason().getNumber(),
-                item.getEpisodePart().getEpisode().getNumber(),
-                item.getEpisodePart().getIndex());
-            progressDialog.addProgressItem(process, identifier, progressItemPanel, event);
-            addProcess(process);
+            progressDialog.addProgressItem(process, item, progressItemPanel, event);
             getServiceEvent().startedItem(item);
         }
         return process;

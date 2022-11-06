@@ -50,6 +50,7 @@ public class SettingsPanel extends JFrame {
 
         add(ffmpegPanel, "w 100%,h 100%");
         setSize(new Dimension(500, 200));
+        setTitle(I18N.i18n("menu.settings.settings"));
 
         Helper.defaultDialog(this);
     }

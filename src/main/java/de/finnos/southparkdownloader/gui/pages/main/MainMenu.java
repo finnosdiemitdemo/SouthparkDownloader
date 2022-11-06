@@ -2,27 +2,25 @@ package de.finnos.southparkdownloader.gui.pages.main;
 
 import de.finnos.southparkdownloader.Helper;
 import de.finnos.southparkdownloader.I18N;
-import de.finnos.southparkdownloader.data.Config;
-import de.finnos.southparkdownloader.data.DownloadDatabase;
 import de.finnos.southparkdownloader.gui.DialogEvent;
+import de.finnos.southparkdownloader.gui.pages.help.AboutDialog;
 import de.finnos.southparkdownloader.gui.pages.settings.SettingsPanel;
 import de.finnos.southparkdownloader.gui.pages.tools.RepairParts;
 
 import javax.swing.*;
-import java.io.File;
 
 public class MainMenu extends JMenuBar {
-    public void init (final Runnable updateDownloadDatabase) {
+    public void init (final Runnable updateDownloadDatabase, final Runnable findNewEpisodes) {
+        final var menuDownloadDatabase = new JMenu(I18N.i18n("download_database"));
+
         final JMenuItem menuItemFileUpdateDownloadDatabase = new JMenuItem(I18N.i18n("menu.file.update_download_database"));
         menuItemFileUpdateDownloadDatabase.addActionListener(e -> updateDownloadDatabase.run());
 
-        final JMenuItem menuItemFileExit = new JMenuItem(I18N.i18n("exit"));
-        menuItemFileExit.addActionListener(e -> System.exit(0));
+        final JMenuItem menuItemFileFindNewEpisodes = new JMenuItem(I18N.i18n("menu.file.find_new_episodes"));
+        menuItemFileFindNewEpisodes.addActionListener(e -> findNewEpisodes.run());
 
-        final JMenu menuFile = new JMenu(I18N.i18n("file"));
-        menuFile.add(menuItemFileUpdateDownloadDatabase);
-        menuFile.add(new JSeparator());
-        menuFile.add(menuItemFileExit);
+        menuDownloadDatabase.add(menuItemFileUpdateDownloadDatabase);
+        menuDownloadDatabase.add(menuItemFileFindNewEpisodes);
 
         final JMenu menuTools = new JMenu(I18N.i18n("menu.tools"));
         final JMenuItem menuItemToolsRepairParts = new JMenuItem(I18N.i18n("menu.tools.repair_parts"));
@@ -43,12 +41,9 @@ public class MainMenu extends JMenuBar {
         menuTools.add(menuItemToolsRepairParts);
 
         final JMenu menuHelp = new JMenu(I18N.i18n("menu.help"));
-        final JMenuItem menuItemHelpInfo = new JMenuItem(I18N.i18n("menu.help.info"));
+        final JMenuItem menuItemHelpInfo = new JMenuItem(I18N.i18n("menu.help.about"));
         menuItemHelpInfo.addActionListener(e -> {
-            String message = "";
-            message += String.format("%s: %s\r\n", I18N.i18n("info.download_database_path"), new File(DownloadDatabase.DOWNLOAD_DATABASE_PATH).getAbsolutePath());
-            message += String.format("%s: %s\r\n", I18N.i18n("info.config_path"), new File(Config.CONFIG_PATH).getAbsolutePath());
-            Helper.showInfoMessage(this, message, I18N.i18n("menu.help.info"));
+            Helper.defaultDialog(new AboutDialog());
         });
 
         menuHelp.add(menuItemHelpInfo);
@@ -60,7 +55,7 @@ public class MainMenu extends JMenuBar {
         });
         menuSettings.add(menuItemSettings);
 
-        add(menuFile);
+        add(menuDownloadDatabase);
         add(menuTools);
         add(menuSettings);
         add(menuHelp);

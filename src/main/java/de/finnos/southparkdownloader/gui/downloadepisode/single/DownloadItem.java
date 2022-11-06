@@ -5,10 +5,11 @@ import de.finnos.southparkdownloader.I18N;
 import de.finnos.southparkdownloader.classes.Episode;
 import de.finnos.southparkdownloader.classes.EpisodePart;
 import de.finnos.southparkdownloader.classes.EpisodePartStream;
+import de.finnos.southparkdownloader.services.ProgressItem;
 
 import java.io.File;
 
-public class DownloadItem {
+public class DownloadItem implements ProgressItem {
     private final Episode episode;
     private final EpisodePart episodePart;
 
@@ -70,5 +71,16 @@ public class DownloadItem {
 
     public EpisodePart getEpisodePart() {
         return episodePart;
+    }
+
+    @Override
+    public String getName() {
+        return "%s%s %s%s %s%s".formatted(
+            I18N.i18n("season.short"),
+            getEpisodePart().getEpisode().getSeason().getNumber(),
+            I18N.i18n("episode.short"),
+            getEpisodePart().getEpisode().getNumber(),
+            I18N.i18n("part.short"),
+            getEpisodePart().getIndex());
     }
 }

@@ -76,7 +76,6 @@ public class DownloadDatabaseHelper {
                     final Episode episode = parseApiResponseEpisode(season, items.get(i).getAsJsonObject(), i);
 
                     episodes.add(episode);
-                    season.getEpisodes().add(episode);
                 }
             }
         });
@@ -116,8 +115,6 @@ public class DownloadDatabaseHelper {
                 }
             }
         }
-
-        episode.setPartsGeneratorUrls(urls);
 
         return urls;
     }

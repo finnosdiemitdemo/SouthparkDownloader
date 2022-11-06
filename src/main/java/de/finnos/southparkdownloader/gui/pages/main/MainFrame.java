@@ -5,23 +5,25 @@ import de.finnos.southparkdownloader.I18N;
 import de.finnos.southparkdownloader.SouthparkDownloader;
 import de.finnos.southparkdownloader.data.Config;
 import de.finnos.southparkdownloader.data.DownloadDatabase;
-import de.finnos.southparkdownloader.gui.pages.file.DownloadDatabaseUpdater;
+import de.finnos.southparkdownloader.gui.pages.downloaddatabase.DownloadDatabaseUpdater;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.Arrays;
 
 public class MainFrame extends JFrame {
     private MainMenu menuBar;
-    private JPanel panelContent;
-    private JPanel panelSeasonsTree;
+    private final JPanel panelContent = new JPanel(new MigLayout());
+    ;
+    private final JPanel panelSeasonsTree = new JPanel(new MigLayout("insets 0, al center center"));
 
-    private JTextArea labelEmptyDatabase;
-    private JButton buttonCreateDatabase;
+    private final JTextArea labelEmptyDatabase = new JTextArea(I18N.i18n("download_database.empty_message"));
+    private final JButton buttonCreateDatabase = new JButton(I18N.i18n("download_database.create"));
 
-    private SeasonsTree tree;
+    private final SeasonsTree tree = new SeasonsTree();
 
     public MainFrame() {
         init();
@@ -46,17 +48,8 @@ public class MainFrame extends JFrame {
     }
 
     private void initContent() {
-        panelContent = new JPanel(new MigLayout());
-        panelSeasonsTree = new JPanel(new MigLayout("insets 0, al center center"));
-
-        tree = new SeasonsTree();
-        tree.init();
-
-        labelEmptyDatabase = new JTextArea(I18N.i18n("download_database.empty_message"));
-        labelEmptyDatabase.setEnabled(false);
         labelEmptyDatabase.setMargin(null);
-
-        buttonCreateDatabase = new JButton(I18N.i18n("download_database.create"));
+        labelEmptyDatabase.setBackground(new Color(0, 0, 0, 0));
         buttonCreateDatabase.addActionListener(e -> updateDownloadDatabase());
 
         JComboBox<Config.DownloadLanguage> downloadLangComboBox = new JComboBox<>();
@@ -71,7 +64,8 @@ public class MainFrame extends JFrame {
         downloadLangComboBox.addActionListener(e -> {
             Config.get().setDownloadLang(((Config.DownloadLanguage) downloadLangComboBox.getSelectedItem()).getCode());
             Config.save();
-            reloadTree();
+            updateSeasonsTree();
+            repaint();
         });
 
         JComboBox<Config.GuiLanguage> guiLangComboBox = new JComboBox<>();
@@ -89,6 +83,28 @@ public class MainFrame extends JFrame {
             SouthparkDownloader.restartApplication();
         });
 
+        final var tfSearchEpisodes = new JTextField();
+        tfSearchEpisodes.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(final DocumentEvent e) {
+                search(tfSearchEpisodes.getText());
+            }
+
+            @Override
+            public void removeUpdate(final DocumentEvent e) {
+                search(tfSearchEpisodes.getText());
+            }
+
+            @Override
+            public void changedUpdate(final DocumentEvent e) {
+                search(tfSearchEpisodes.getText());
+            }
+        });
+
+        final var panelSearchPanel = new JPanel(new MigLayout("insets 0, al right center"));
+        panelSearchPanel.add(new JLabel(I18N.i18n("search_for_episodes")));
+        panelSearchPanel.add(tfSearchEpisodes, "w 150px");
+
         final var captionWidth = "120px";
 
         panelContent.add(new JLabel(I18N.i18n("download_domain")), "w %s".formatted(captionWidth));
@@ -98,9 +114,14 @@ public class MainFrame extends JFrame {
         panelContent.add(downloadLangComboBox, "w 100px, wrap");
 
         panelContent.add(new JLabel(I18N.i18n("gui_language")), "w %s".formatted(captionWidth));
-        panelContent.add(guiLangComboBox, "w 100px, wrap");
+        panelContent.add(guiLangComboBox, "w 100px");
+        panelContent.add(panelSearchPanel, "w 100%, wrap");
 
         panelContent.add(panelSeasonsTree, "span, h 100%, w 100%");
+    }
+
+    private void search(final String searchString) {
+        tree.search(searchString);
     }
 
     private void updateDownloadDatabase() {
@@ -113,9 +134,13 @@ public class MainFrame extends JFrame {
         }
     }
 
+    private void findNewEpisodes() {
+        DownloadDatabaseUpdater.findNewEpisodes(this::updateSeasonsTree);
+    }
+
     private void initMenuBar() {
         menuBar = new MainMenu();
-        menuBar.init(this::updateDownloadDatabase);
+        menuBar.init(this::updateDownloadDatabase, this::findNewEpisodes);
     }
 
     private void updateSeasonsTree() {
@@ -133,7 +158,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void reloadTree()  {
+    private void reloadTree() {
         tree.update();
     }
 }

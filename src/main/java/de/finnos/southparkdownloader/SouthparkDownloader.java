@@ -17,6 +17,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class SouthparkDownloader {
     private static final Logger LOG = LoggerFactory.getLogger(SouthparkDownloader.class);
@@ -49,7 +51,7 @@ public class SouthparkDownloader {
         }
     }
 
-    public static boolean ffmpegExecutablePathsValid () {
+    public static boolean ffmpegExecutablePathsValid() {
         return FfmpegExecutionHelper.isFFmpegFileExecutable(Config.get().getFfmpegFilePath())
             && FfmpegExecutionHelper.isFFmpegFileExecutable(Config.get().getFfprobeFilePath());
     }
@@ -58,6 +60,20 @@ public class SouthparkDownloader {
         if (ffmpegExecutablePathsValid()) {
             MAIN_FRAME = new MainFrame();
         } else {
+            // check if there is a bin folder with ffmpeg binaries
+            if (Files.exists(Path.of("bin", "ffmpeg.exe"))
+                && Files.exists(Path.of("bin", "ffprobe.exe"))
+            ) {
+                Config.get().setFfmpegFilePath("bin/ffmpeg.exe");
+                Config.get().setFfprobeFilePath("bin/ffprobe.exe");
+
+                if (ffmpegExecutablePathsValid()) {
+                    MAIN_FRAME = new MainFrame();
+                    return;
+                }
+            }
+
+            // Open settings dialog
             if (Helper.showConfirmMessage(null, I18N.i18n("startup.error.invalid_ffmpeg_paths.title"),
                 I18N.i18n("startup.error.invalid_ffmpeg_paths.message")) == JOptionPane.OK_OPTION) {
                 final var settingsPanel = new SettingsPanel();

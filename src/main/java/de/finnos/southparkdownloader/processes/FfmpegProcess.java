@@ -37,7 +37,9 @@ public class FfmpegProcess implements CancelableProcess {
 
     @Override
     public void cancel() {
-        process.destroyForcibly();
+        if (process.isAlive()) {
+            process.destroyForcibly();
+        }
     }
 
     @Override

@@ -5,6 +5,7 @@ import de.finnos.southparkdownloader.I18N;
 import de.finnos.southparkdownloader.data.Config;
 import de.finnos.southparkdownloader.processes.FfmpegProcess;
 import de.finnos.southparkdownloader.processes.ThreadProcess;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +67,6 @@ public class FfmpegExecutionHelper {
                     handleStream.accept(errorStream, "[ERROR] ");
                 }
             };
-
-            progressThread.start();
 
             return new FfmpegProcess(process, progressThread);
         }
@@ -141,7 +140,8 @@ public class FfmpegExecutionHelper {
 
     public static boolean isFFmpegFileExecutable (final String pathString) {
         final var path = Path.of(pathString);
-        return Files.exists(path) && Files.isExecutable(path) && path.toString().endsWith(".exe");
+        final var extension = FilenameUtils.getExtension(pathString);
+        return Files.exists(path) && !Files.isDirectory(path) && Files.isExecutable(path) && (extension.isBlank() || extension.equals("exe"));
     }
 
     public static class FFmpegExecutablesException extends RuntimeException {

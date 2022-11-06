@@ -1,6 +1,8 @@
 package de.finnos.southparkdownloader.classes;
 
-public record Resolution(String resolutionString, Long resolution) implements Comparable<Resolution> {
+import java.io.Serializable;
+
+public record Resolution(String resolutionString, Long resolution) implements Comparable<Resolution>, Serializable {
 
     @Override
     public int compareTo(final Resolution o) {

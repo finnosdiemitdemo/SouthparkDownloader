@@ -8,12 +8,13 @@ import de.finnos.southparkdownloader.ffmpeg.ffprobe.FfprobeHelper;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
-public class Episode {
+public class Episode implements Serializable {
     @Expose
     private final String id;
 
@@ -165,6 +166,10 @@ public class Episode {
         }
 
         return false;
+    }
+
+    public boolean canDelete() {
+        return folderExists();
     }
 
     public void setPath() {

@@ -6,10 +6,11 @@ import de.finnos.southparkdownloader.data.Config;
 import de.finnos.southparkdownloader.data.Setup;
 
 import java.io.File;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-public class Season {
+public class Season implements Serializable {
     @Expose
     private final String name;
 
@@ -64,19 +65,26 @@ public class Season {
         return false;
     }
 
+    public boolean canDelete () {
+        return folderExists();
+    }
+
     public void openFolder() {
         Helper.openFileWithSystemDefaultProgram(getPath());
     }
 
     public boolean canOpenFolder() {
+        return folderExists();
+    }
+
+    public boolean folderExists() {
         return new File(getPath()).exists();
     }
 
     public void setPath() {
-        final var downloadLanguage = Config.DownloadLanguage.valueOfCode(Config.get().getDownloadLang());
-        final var episodesFolderPath = Setup.EPISODES_FOLDER_PATH + downloadLanguage.getName();
-        final var folderName = downloadLanguage.getFolderNameSeason() + " " + number;
-        this.path = Path.of(episodesFolderPath, folderName).toString();
+        final var downloadFolder = Setup.getDownloadFolder();
+        final var folderName = Config.DownloadLanguage.valueOfCode(Config.get().getDownloadLang()).getFolderNameSeason() + " " + number;
+        this.path = Path.of(downloadFolder, folderName).toString();
 
         episodes.forEach(Episode::setPath);
     }
